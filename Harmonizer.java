@@ -3,6 +3,7 @@ package com.company;
 import jm.music.data.*;
 import jm.util.Read;
 import jm.util.Write;
+
 import java.util.HashMap;
 
 import static jm.constants.Pitches.*;
@@ -100,38 +101,65 @@ public class Harmonizer {
 
         // for every note
         double counter = 0;
+        boolean hasBeat1 = false;
+        boolean hasBeat3 = false;
+
         for (int i = 0; i < notes.length; i++) {
 
-            System.out.println("rhythm: " + rhythm[i]);
+            if (rhythm[i] > 3.8 && rhythm[i] < 4.2)         // whole note and whole rest
+                rhythm[i] = 4.0;
 
-            if (rhythm[i] > 0.9 && rhythm[i] < 1.1)
-                rhythm[i] = 1.0;
+            else if (rhythm[i] > 2.7 && rhythm[i] < 3.1)    // dotted half note
+                rhythm[i] = 3.0;
 
-            else if (rhythm[i] > 1.8 && rhythm[i] < 2.1)
+            else if (rhythm[i] > 1.8 && rhythm[i] < 2.2)    // half note and half rest
                 rhythm[i] = 2.0;
 
-            System.out.println("rhythm: " + rhythm[i]);
+            else if (rhythm[i] > 1.4 && rhythm[i] < 1.6)    // dotted quarter note
+                rhythm[i] = 1.5;
 
+            else if (rhythm[i] > 0.9 && rhythm[i] < 1.2)    // quarter note and quarter rest
+                rhythm[i] = 1.0;
+
+            else if (rhythm[i] > 0.4 && rhythm[i] < 0.6)    // eight note and eight rest
+                rhythm[i] = 0.5;
+
+            else if (rhythm[i] > 0.24 && rhythm[i] < 0.28)  // sixteenth note and sixteenth rest
+                rhythm[i] = 0.25;
+
+            System.out.println("rhythm: " + rhythm[i]);
 
             counter += rhythm[i];
 
-            // adds chord on beat 1
-            if (counter - rhythm[i] == 0.0) {                                                                             // not reading half notes properly
-                int[] chord = addChord(notes[i], tonic);
-                chordPhrase.addChord(chord, chordLength);                                                                        // remember to fix length
+            // does not harmonize if note is a rest
+            if (notes[i] < 0)
+                continue;
 
-            }
-            // adds chord on beat 3
-            else if (counter >= 3.0) {
+            // adds chord on beat 1
+            if (!hasBeat1) {
                 int[] chord = addChord(notes[i], tonic);
                 chordPhrase.addChord(chord, chordLength);
+                hasBeat1 = true;
+                System.out.println("added chord on 1");
+                System.out.println("counter: " + counter);
             }
 
-            if (counter == 4.0)
+            // adds chord on beat 3
+            if (counter >= 3.0 && !hasBeat3) {
+                int[] chord = addChord(notes[i], tonic);
+                chordPhrase.addChord(chord, chordLength);
+                hasBeat3 = true;
+
+                System.out.println("added chord on 3");
+                System.out.println("counter: " + counter);
+            }
+
+            // resets the measure
+            if (counter == 4.0) {
+                hasBeat1 = false;
+                hasBeat3 = false;
                 counter = 0.0;
-
-
-
+            }
         }
 
         chordPart.addCPhrase(chordPhrase);
@@ -146,13 +174,13 @@ public class Harmonizer {
 
     private int[] addChord(int melodyNote, int tonic) {
 
-        Note melody = new Note(melodyNote, 2);
+//        Note melody = new Note(melodyNote, 2);
 //        System.out.println("melody note: " + melody.getName());
 
-        while (melodyNote > 12)
+        while (melodyNote >= 12)
             melodyNote = melodyNote - 12;
 
-        System.out.println("melody note: " + melodyNote);
+//        System.out.println("melody note: " + melodyNote);
 
         int melodyDegree = pitchToDegree(melodyNote, tonic);
 //        System.out.println("melody degree: " + melodyDegree);
