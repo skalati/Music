@@ -12,8 +12,9 @@ import static jm.music.tools.PhraseAnalysis.pitchToDegree;
 public class Harmonizer {
     private Score score;
     private int[] cof;
-    private  int[] majScale;
-    private  int[] scaleDegree;
+    private int[] majScale;
+    private int[] scaleDegree;
+    private int center;
 
     public Harmonizer(Score regScore) {
         cof = new int[12];
@@ -64,9 +65,7 @@ public class Harmonizer {
         if (note.equalsIgnoreCase("half note")) {
             chordLength = 2;
 //            System.out.println("half note");
-
         }
-
 
         Part[] parts = score.getPartArray();
 //        System.out.println("num of Parts: " + parts.length);
@@ -142,6 +141,9 @@ public class Harmonizer {
                 hasBeat1 = true;
                 System.out.println("added chord on 1");
                 System.out.println("counter: " + counter);
+
+                if (i == 0)
+                    center = chord[1];
             }
 
             // adds chord on beat 3
@@ -177,7 +179,7 @@ public class Harmonizer {
 //        Note melody = new Note(melodyNote, 2);
 //        System.out.println("melody note: " + melody.getName());
 
-        while (melodyNote >= 12)
+        while (melodyNote >= 0)
             melodyNote = melodyNote - 12;
 
 //        System.out.println("melody note: " + melodyNote);
@@ -293,22 +295,37 @@ public class Harmonizer {
         int rootDeg = pitchToDegree(root, tonic);
 
         int[] chord = new int[3];
-        int octave = 48;
+        int octave = 72;
         chord[0] = root + octave;
         chord[1] = root + majScale[scaleDegree[rootDeg] + 1] + majScale[scaleDegree[rootDeg] + 2] + octave;
         chord[2] = root + majScale[scaleDegree[rootDeg] + 1] + majScale[scaleDegree[rootDeg] + 2]
                 + majScale[scaleDegree[rootDeg] + 3] + majScale[scaleDegree[rootDeg] + 4] + octave;
 
 //        System.out.println("The selected chord is: ");
-        for (int i = 0; i < chord.length; i++) {
-            Note chordNote = new Note(chord[i], 2);
+//        for (int i = 0; i < chord.length; i++) {
+//            Note chordNote = new Note(chord[i], 2);
 //            System.out.print(chordNote.getName() + " ");
 //            System.out.println(chord[i] + " ");
-        }
+//        }
 //        System.out.println();
 
-        return chord;
+        return centerChord(chord);
 
+    }
+
+    // centers the chord
+    private int[] centerChord (int[] chord) {
+        System.out.println("called");
+
+        for (int i = 0; i < chord.length; i++) {
+            int diff = chord[i] - center;
+            System.out.println("chord[i] - center: " + diff);
+
+            if (chord[i] - center >= 11) {
+                chord[i] = chord[i] - 12;
+            }
+        }
+        return chord;
     }
 
     public static void main(String[] args) {
