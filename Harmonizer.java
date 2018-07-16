@@ -1,19 +1,16 @@
 package com.company;
-
 import jm.music.data.*;
 import jm.util.Read;
 import jm.util.Write;
-
 import java.util.HashMap;
-
 import static jm.constants.Pitches.*;
 import static jm.music.tools.PhraseAnalysis.pitchToDegree;
 
 public class Harmonizer {
-    private Score score;
-    private int[] cof;
-    private int[] majScale;
-    private int[] scaleDegree;
+    private Score score;          // score that is read in
+    private int[] cof;            // distances on the circle of fifths
+    private int[] majScale;       // whole - whole - half pattern
+    private int[] scaleDegree;    // converts from chromatic scale degree
     private int center;
 
     public Harmonizer(Score regScore) {
@@ -38,8 +35,8 @@ public class Harmonizer {
         majScale[1 + 2] = 1;
         majScale[2 + 2] = 2;
         majScale[3 + 2] = 2;
-        majScale[4 + 2] = 1;
-        majScale[5 + 2] = 2;
+        majScale[4 + 2] = 1;     // 4th scale degree
+        majScale[5 + 2] = 2;     // 5th scale degree
         majScale[6 + 2] = 2;
         majScale[7 + 2] = 2;
         majScale[8 + 2] = 1;
@@ -59,16 +56,9 @@ public class Harmonizer {
         score = regScore;
     }
 
-    public Score harmonize(String note) {
-        int chordLength = 0;
-
-        if (note.equalsIgnoreCase("half note")) {
-            chordLength = 2;
-//            System.out.println("half note");
-        }
-
+    // harmonizes a melody line
+    public Score harmonize() {
         Part[] parts = score.getPartArray();
-//        System.out.println("num of Parts: " + parts.length);
         int keySig = score.getKeySignature();
 
         HashMap<Integer, Integer> keySigs = new HashMap<>();
@@ -89,7 +79,6 @@ public class Harmonizer {
         keySigs.put(-7, cf0);
 
         Phrase[] phrases = parts[0].getPhraseArray();
-//        System.out.println("num of phrases: " + phrases.length);
         int instrument = parts[0].getInstrument();
         Part chordPart = new Part();
         chordPart.setInstrument(instrument);
@@ -126,22 +115,26 @@ public class Harmonizer {
             else if (rhythm[i] > 0.24 && rhythm[i] < 0.28)  // sixteenth note and sixteenth rest
                 rhythm[i] = 0.25;
 
-            System.out.println("rhythm: " + rhythm[i]);
-
             counter += rhythm[i];
 
             // does not harmonize if note is a rest
             if (notes[i] < 0)
                 continue;
 
+            int melDeg = pitchToDegree(notes[i], tonic);                                                                  // buggy?
+            System.out.println("mel deg: " + melDeg);
+            if (melDeg != 0 && melDeg != 2 && melDeg != 4 && melDeg != 5 && melDeg != 7 && melDeg != 9 && melDeg != 11) {
+                System.out.println("continue:");
+                continue;
+            }
+
             // adds chord on beat 1
             if (!hasBeat1) {
                 int[] chord = addChord(notes[i], tonic);
-                chordPhrase.addChord(chord, chordLength);
+                chordPhrase.addChord(chord, 2);
                 hasBeat1 = true;
-                System.out.println("added chord on 1");
-                System.out.println("counter: " + counter);
 
+                // uses the third of first chord as tonal center
                 if (i == 0)
                     center = chord[1];
             }
@@ -149,11 +142,8 @@ public class Harmonizer {
             // adds chord on beat 3
             if (counter >= 3.0 && !hasBeat3) {
                 int[] chord = addChord(notes[i], tonic);
-                chordPhrase.addChord(chord, chordLength);
+                chordPhrase.addChord(chord, 2);
                 hasBeat3 = true;
-
-                System.out.println("added chord on 3");
-                System.out.println("counter: " + counter);
             }
 
             // resets the measure
@@ -163,62 +153,35 @@ public class Harmonizer {
                 counter = 0.0;
             }
         }
-
         chordPart.addCPhrase(chordPhrase);
         score.addPart(chordPart);
 
         return score;
     }
 
+    // return the distance between two notes on the circle of fifths
     private int distance(int root, int melodyNote) {
         return cof[pitchToDegree(melodyNote, c0)] - cof[pitchToDegree(root, c0)];
     }
 
+    // generates 3 possible chords and adds the most probable
     private int[] addChord(int melodyNote, int tonic) {
-
-//        Note melody = new Note(melodyNote, 2);
-//        System.out.println("melody note: " + melody.getName());
 
         while (melodyNote >= 0)
             melodyNote = melodyNote - 12;
 
-//        System.out.println("melody note: " + melodyNote);
-
         int melodyDegree = pitchToDegree(melodyNote, tonic);
-//        System.out.println("melody degree: " + melodyDegree);
-//        System.out.println();
 
-        // positions in the triad
+        // positions of the melody note in the triad
         int pos1 = melodyNote;
         int pos2 = melodyNote - majScale[scaleDegree[melodyDegree]] - majScale[scaleDegree[melodyDegree] - 1];
         int pos3 = melodyNote - majScale[scaleDegree[melodyDegree]] - majScale[scaleDegree[melodyDegree] - 1]
-                - majScale[scaleDegree[melodyDegree] - 2] - majScale[scaleDegree[melodyDegree] - 3];
-
-//        Note pos1Note = new Note(pos1, 2);
-//        Note pos2Note = new Note(pos2, 2);
-//        Note pos3Note = new Note(pos3, 2);
-
-//        System.out.println("pos1: " + pos1Note.getName());
-//        System.out.println("pos2: " + pos2Note.getName());
-//        System.out.println("pos3: " + pos3Note.getName());
-//        System.out.println();
+                          - majScale[scaleDegree[melodyDegree] - 2] - majScale[scaleDegree[melodyDegree] - 3];
 
         double pos1Prob = (10 - Math.abs(distance(pos1, melodyNote)))/10.0;
         double pos2Prob = (10 - Math.abs(distance(pos2, melodyNote)))/10.0;
         double pos3Prob = (10 - Math.abs(distance(pos3, melodyNote)))/10.0;
-
-//        System.out.println("dist 1: " + Math.abs(distance(pos1, melodyNote)));
-//        System.out.println("dist 2: " + Math.abs(distance(pos2, melodyNote)));
-//        System.out.println("dist 3: " + Math.abs(distance(pos3, melodyNote)));
-//        System.out.println();
-//
-//        System.out.println("pos1Prob: " + pos1Prob);
-//        System.out.println("pos2Prob: " + pos2Prob);
-//        System.out.println("pos3Prob: " + pos3Prob);
-
         double sumOfProbs = pos1Prob + pos2Prob + pos3Prob;
-//        System.out.println("sumOfProbs: " + sumOfProbs);
-//        System.out.println();
 
         pos1Prob = pos1Prob/sumOfProbs;
         pos2Prob = pos2Prob/sumOfProbs;
@@ -257,43 +220,17 @@ public class Harmonizer {
             pos2 = rootTemp;
         }
 
-//        System.out.println("after the sort");
-//        Note sort1 = new Note(pos1, 2);
-//        System.out.println("pos1Prob: " + pos1Prob);
-//        System.out.println("pos1: " + sort1.getName());
-//        Note sort2 = new Note(pos2, 2);
-//        System.out.println("pos2Prob: " + pos2Prob);
-//        System.out.println("pos2: " + sort2.getName());
-//        Note sort3 = new Note(pos3, 2);
-//        System.out.println("pos3Prob: " + pos3Prob);
-//        System.out.println("pos3: " + sort3.getName());
-//        System.out.println();
-
-
-
-
         // creates and returns the chord
         int root;
-        if (rand <= pos1Prob) {
+        if (rand <= pos1Prob)
             root = pos1;
-//            System.out.println("pos1 selected: " + sort1.getName());
-        }
 
-        else if (rand <= pos1Prob + pos2Prob) {
+        else if (rand <= pos1Prob + pos2Prob)
             root = pos2;
-//            System.out.println("pos2 selected: " + sort2.getName());
-        }
-        else {
-            root = pos3;
-//            System.out.println("pos3 selected: " + sort3.getName());
-        }
 
-//        System.out.println("random: " + rand);
-//        Note rootNote = new Note(root, 2);
-//        System.out.println("root: " + rootNote.getName());
+        else root = pos3;
 
         int rootDeg = pitchToDegree(root, tonic);
-
         int[] chord = new int[3];
         int octave = 72;
         chord[0] = root + octave;
@@ -301,29 +238,15 @@ public class Harmonizer {
         chord[2] = root + majScale[scaleDegree[rootDeg] + 1] + majScale[scaleDegree[rootDeg] + 2]
                 + majScale[scaleDegree[rootDeg] + 3] + majScale[scaleDegree[rootDeg] + 4] + octave;
 
-//        System.out.println("The selected chord is: ");
-//        for (int i = 0; i < chord.length; i++) {
-//            Note chordNote = new Note(chord[i], 2);
-//            System.out.print(chordNote.getName() + " ");
-//            System.out.println(chord[i] + " ");
-//        }
-//        System.out.println();
-
         return centerChord(chord);
-
     }
 
     // centers the chord
+    // if the interval is larger than a Major 7th, then drop down an octave
     private int[] centerChord (int[] chord) {
-        System.out.println("called");
-
         for (int i = 0; i < chord.length; i++) {
-            int diff = chord[i] - center;
-            System.out.println("chord[i] - center: " + diff);
-
-            if (chord[i] - center >= 11) {
+            if (chord[i] - center >= 11)
                 chord[i] = chord[i] - 12;
-            }
         }
         return chord;
     }
@@ -332,7 +255,7 @@ public class Harmonizer {
         Score score = new Score();
         Read.midi(score);
         Harmonizer harmony = new Harmonizer(score);
-        Score hScore = harmony.harmonize("half note");
+        Score hScore = harmony.harmonize();
         Write.midi(hScore);
     }
 }
