@@ -4,6 +4,7 @@ import jm.util.Read;
 import jm.util.Write;
 import java.util.HashMap;
 import static jm.constants.Pitches.*;
+import static jm.constants.ProgramChanges.*;
 import static jm.music.tools.PhraseAnalysis.pitchToDegree;
 
 public class Harmonizer {
@@ -11,7 +12,7 @@ public class Harmonizer {
     private int[] cof;            // distances on the circle of fifths
     private int[] majScale;       // whole - whole - half pattern
     private int[] scaleDegree;    // converts from chromatic scale degree
-    private int center;
+    private int center;           // tonal center of the chords
 
     public Harmonizer(Score regScore) {
         cof = new int[12];
@@ -57,7 +58,7 @@ public class Harmonizer {
     }
 
     // harmonizes a melody line
-    public Score harmonize() {
+    private Score harmonize(int voice) {
         Part[] parts = score.getPartArray();
         int keySig = score.getKeySignature();
 
@@ -78,11 +79,22 @@ public class Harmonizer {
         keySigs.put(-6, gf0);
         keySigs.put(-7, cf0);
 
+        int[] voices = voiceSelector(voice);
+
         Phrase[] phrases = parts[0].getPhraseArray();
-        int instrument = parts[0].getInstrument();
-        Part chordPart = new Part();
-        chordPart.setInstrument(instrument);
-        CPhrase chordPhrase = new CPhrase();
+
+        Part part1 = new Part();
+        part1.setInstrument(voices[0]);
+        Part part2 = new Part();
+        part2.setInstrument(voices[1]);
+        Part part3 = new Part();
+        part3.setInstrument(voices[2]);
+
+
+        Phrase voice1Phrase = new Phrase();
+        Phrase voice2Phrase = new Phrase();
+        Phrase voice3Phrase = new Phrase();
+
         int[] notes = phrases[0].getPitchArray();
         double[] rhythm = phrases[0].getRhythmArray();
         int tonic = keySigs.get(keySig);
@@ -121,17 +133,19 @@ public class Harmonizer {
             if (notes[i] < 0)
                 continue;
 
-            int melDeg = pitchToDegree(notes[i], tonic);                                                                  // buggy?
-            System.out.println("mel deg: " + melDeg);
-            if (melDeg != 0 && melDeg != 2 && melDeg != 4 && melDeg != 5 && melDeg != 7 && melDeg != 9 && melDeg != 11) {
-                System.out.println("continue:");
-                continue;
-            }
+//            int melDeg = pitchToDegree(notes[i], tonic);                                                                  // buggy?
+//            System.out.println("mel deg: " + melDeg);
+//            if (melDeg != 0 && melDeg != 2 && melDeg != 4 && melDeg != 5 && melDeg != 7 && melDeg != 9 && melDeg != 11) {
+//                System.out.println("continue:");
+//                continue;
+//            }
 
             // adds chord on beat 1
             if (!hasBeat1) {
                 int[] chord = addChord(notes[i], tonic);
-                chordPhrase.addChord(chord, 2);
+                voice1Phrase.addNote(chord[0], 2);
+                voice2Phrase.addNote(chord[1], 2);
+                voice3Phrase.addNote(chord[2], 2);
                 hasBeat1 = true;
 
                 // uses the third of first chord as tonal center
@@ -142,7 +156,9 @@ public class Harmonizer {
             // adds chord on beat 3
             if (counter >= 3.0 && !hasBeat3) {
                 int[] chord = addChord(notes[i], tonic);
-                chordPhrase.addChord(chord, 2);
+                voice1Phrase.addNote(chord[0], 2);
+                voice2Phrase.addNote(chord[1], 2);
+                voice3Phrase.addNote(chord[2], 2);
                 hasBeat3 = true;
             }
 
@@ -153,8 +169,13 @@ public class Harmonizer {
                 counter = 0.0;
             }
         }
-        chordPart.addCPhrase(chordPhrase);
-        score.addPart(chordPart);
+        part1.addPhrase(voice1Phrase);
+        part2.addPhrase(voice2Phrase);
+        part3.addPhrase(voice3Phrase);
+
+        score.addPart(part1);
+        score.addPart(part2);
+        score.addPart(part3);
 
         return score;
     }
@@ -162,6 +183,60 @@ public class Harmonizer {
     // return the distance between two notes on the circle of fifths
     private int distance(int root, int melodyNote) {
         return cof[pitchToDegree(melodyNote, c0)] - cof[pitchToDegree(root, c0)];
+    }
+
+    private int[] voiceSelector(int genre) {
+        int[] voices = new int[4];
+
+        // String Orchestra
+        if (genre == 0) {
+            voices[0] = VIOLIN;
+            voices[1] = VIOLA;
+            voices[2] = CELLO;
+            voices[3] = DOUBLE_BASS;
+        }
+
+        // Rock
+        else if (genre == 1) {
+            voices[0] = ELECTRIC_GUITAR;
+            voices[1] = ELECTRIC_PIANO;
+            voices[2] = DISTORTED_GUITAR;
+            voices[3] = ELECTRIC_BASS;
+        }
+
+        // Pop
+        else if (genre == 2) {
+            voices[0] = ELECTRIC_PIANO;
+            voices[1] = BRIGHT_ACOUSTIC;
+            voices[2] = PAD;
+            voices[3] = SYNTH_BASS;
+        }
+
+        // Country
+        else if (genre == 3) {
+            voices[0] = FIDDLE;
+            voices[1] = BANJO;
+            voices[2] = ACOUSTIC_GUITAR;
+            voices[3] = ACCORDION;
+        }
+
+        // Jazz
+        else if (genre == 4) {
+            voices[0] = PIANO;
+            voices[1] = JAZZ_GUITAR;
+            voices[2] = TENOR_SAXOPHONE;
+            voices[3] = FINGERED_BASS;
+        }
+
+        // Ambiental --- other instrument options include: FANTASIA, ECHO_DROPS
+        else if (genre == 5) {
+            voices[0] = TINKLE_BELL;
+            voices[1] = MARIMBA;
+            voices[2] = STAR_THEME;
+            voices[3] = WIND;
+        }
+        return voices;
+
     }
 
     // generates 3 possible chords and adds the most probable
@@ -255,7 +330,7 @@ public class Harmonizer {
         Score score = new Score();
         Read.midi(score);
         Harmonizer harmony = new Harmonizer(score);
-        Score hScore = harmony.harmonize();
+        Score hScore = harmony.harmonize(0);
         Write.midi(hScore);
     }
 }
