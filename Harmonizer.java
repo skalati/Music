@@ -83,12 +83,13 @@ public class Harmonizer {
 
         Phrase[] phrases = parts[0].getPhraseArray();
 
+        parts[0].setInstrument(voices[0]);
         Part part1 = new Part();
-        part1.setInstrument(voices[0]);
+        part1.setInstrument(voices[1]);
         Part part2 = new Part();
-        part2.setInstrument(voices[1]);
+        part2.setInstrument(voices[2]);
         Part part3 = new Part();
-        part3.setInstrument(voices[2]);
+        part3.setInstrument(voices[3]);
 
 
         Phrase voice1Phrase = new Phrase();
@@ -185,11 +186,12 @@ public class Harmonizer {
         return cof[pitchToDegree(melodyNote, c0)] - cof[pitchToDegree(root, c0)];
     }
 
+    // selects the instruments for each of the 4 voices
     private int[] voiceSelector(int genre) {
         int[] voices = new int[4];
 
         // String Orchestra
-        if (genre == 0) {
+        if (genre == 1) {
             voices[0] = VIOLIN;
             voices[1] = VIOLA;
             voices[2] = CELLO;
@@ -197,23 +199,23 @@ public class Harmonizer {
         }
 
         // Rock
-        else if (genre == 1) {
+        else if (genre == 2) {
             voices[0] = ELECTRIC_GUITAR;
-            voices[1] = ELECTRIC_PIANO;
+            voices[1] = ELECTRIC_BASS;
             voices[2] = DISTORTED_GUITAR;
-            voices[3] = ELECTRIC_BASS;
+            voices[3] = ELECTRIC_PIANO;
         }
 
         // Pop
-        else if (genre == 2) {
-            voices[0] = ELECTRIC_PIANO;
+        else if (genre == 3) {
+            voices[0] = SYNTH_BASS;
             voices[1] = BRIGHT_ACOUSTIC;
             voices[2] = PAD;
-            voices[3] = SYNTH_BASS;
+            voices[3] = ELECTRIC_PIANO;
         }
 
         // Country
-        else if (genre == 3) {
+        else if (genre == 4) {
             voices[0] = FIDDLE;
             voices[1] = BANJO;
             voices[2] = ACOUSTIC_GUITAR;
@@ -221,22 +223,13 @@ public class Harmonizer {
         }
 
         // Jazz
-        else if (genre == 4) {
-            voices[0] = PIANO;
-            voices[1] = JAZZ_GUITAR;
-            voices[2] = TENOR_SAXOPHONE;
-            voices[3] = FINGERED_BASS;
-        }
-
-        // Ambiental --- other instrument options include: FANTASIA, ECHO_DROPS
         else if (genre == 5) {
-            voices[0] = TINKLE_BELL;
-            voices[1] = MARIMBA;
-            voices[2] = STAR_THEME;
-            voices[3] = WIND;
+            voices[0] = TENOR_SAXOPHONE;
+            voices[1] = JAZZ_GUITAR;
+            voices[2] = FINGERED_BASS;
+            voices[3] = PIANO;
         }
         return voices;
-
     }
 
     // generates 3 possible chords and adds the most probable
@@ -330,7 +323,7 @@ public class Harmonizer {
         Score score = new Score();
         Read.midi(score);
         Harmonizer harmony = new Harmonizer(score);
-        Score hScore = harmony.harmonize(0);
+        Score hScore = harmony.harmonize(4);
         Write.midi(hScore);
     }
 }
