@@ -1,0 +1,218 @@
+package com.company;
+
+import jm.music.data.Score;
+import jm.util.Read;
+import jm.util.Write;
+
+import javax.swing.*;
+import java.awt.event.*;
+import java.util.HashMap;
+
+import static jm.constants.ProgramChanges.*;
+
+public class HForm {
+    private JButton HarmonizeButton;
+    private JPanel panelMain;
+    private JButton buttonRock;
+    private JList InstrumentList4;
+    private JButton buttonPop;
+    private JButton buttonClassical;
+    private JButton buttonCountry;
+    private JPanel panelGenres;
+    private JComboBox comboBox0;
+    private JComboBox comboBox3;
+    private JComboBox comboBox1;
+    private JComboBox comboBox2;
+
+    // private JPopupMenu popup;
+    private int voice0;
+    private int voice1;
+    private int voice2;
+    private int voice3;
+
+    public HForm() {
+
+        voice0 = 0;
+        voice1 = 0;
+        voice2 = 0;
+        voice3 = 0;
+
+        HashMap<String, Integer> instruments = new HashMap<>();
+        instruments.put("ACOUSTIC BASS", ACOUSTIC_BASS);
+        instruments.put("ACOUSTIC GUITAR", ACOUSTIC_GUITAR);
+        instruments.put("ACCORDION", ACCORDION);
+        instruments.put("ACOUSTIC GRAND PIANO", ACOUSTIC_GRAND);
+        instruments.put("ALTO SAXOPHONE", ALTO_SAXOPHONE);
+        instruments.put("BANJO", BANJO);
+        instruments.put("BARI SAXOPHONE", BARI_SAX);
+        instruments.put("BASS", BASS);
+        instruments.put("BASSOON", BASSOON);
+        instruments.put("BELLS", BELLS);
+        instruments.put("CELLO", CELLO);
+        instruments.put("CHOIR", CHOIR);
+        instruments.put("CHURCH ORGAN", CHURCH_ORGAN);
+        instruments.put("CLARINET", CLARINET);
+        instruments.put("CONTRABASS", CONTRA_BASS);
+        instruments.put("DISTORTED GUITAR", DISTORTED_GUITAR);
+        instruments.put("ELECTRIC BASS", ELECTRIC_BASS);
+        instruments.put("ELECTRIC GRAND PIANO", ELECTRIC_GRAND);
+        instruments.put("ELECTRIC GUITAR", ELECTRIC_GUITAR);
+        instruments.put("ELECTRIC ORGAN", ELECTRIC_ORGAN);
+        instruments.put("ELECTRIC PIANO", ELECTRIC_PIANO);
+        instruments.put("FIDDLE", FIDDLE);
+        instruments.put("FINGERED BASS", FINGERED_BASS);
+        instruments.put("FLUTE", FLUTE);
+        instruments.put("FRENCH HORN", FRENCH_HORN);
+        instruments.put("GLOCKENSPIEL", GLOCKENSPIEL);
+        instruments.put("GUITAR", GUITAR);
+        instruments.put("HARP", HARP);
+        instruments.put("JAZZ GUITAR", JAZZ_GUITAR);
+        instruments.put("JAZZ ORGAN", JAZZ_ORGAN);
+        instruments.put("MARIMBA", MARIMBA);
+        instruments.put("MUTED GUITAR", MUTED_GUITAR);
+        instruments.put("MUTED TRUMPET", MUTED_TRUMPET);
+        instruments.put("NYLON GUITAR", NYLON_GUITAR);
+        instruments.put("OBOE", OBOE);
+        instruments.put("ORGAN", ORGAN);
+        instruments.put("OVERDRIVE GUITAR", OVERDRIVE_GUITAR);
+        instruments.put("PICCOLO", PICCOLO);
+        instruments.put("PIZZICATO STRINGS", PIZZICATO_STRINGS);
+        instruments.put("SOPRANO SAXOPHONE", SOPRANO_SAXOPHONE);
+        instruments.put("STEEL DRUM", STEEL_DRUM);
+        instruments.put("STRINGS", STRINGS);
+        instruments.put("SYNTH BASS", SYNTH_BASS);
+        instruments.put("TENOR SAXOPHONE", TENOR_SAXOPHONE);
+        instruments.put("TIMPANI", TIMPANI);
+        instruments.put("TREMOLO STRINGS", TREMOLO_STRINGS);
+        instruments.put("TROMBONE", TROMBONE);
+        instruments.put("TRUMPET", TRUMPET);
+        instruments.put("TUBA", TUBA);
+        instruments.put("VIBRAPHONE", VIBRAPHONE);
+        instruments.put("VIOLA", VIOLA);
+        instruments.put("VIOLIN", VIOLIN);
+        instruments.put("XYLOPHONE", XYLOPHONE);
+
+
+
+
+        HarmonizeButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                Score score = new Score();
+                Read.midi(score);
+                Harmonizer harmony = new Harmonizer(score);
+                Score hScore = harmony.harmonize(voice0, voice1, voice2, voice3);
+                Write.midi(hScore);
+            }
+        });
+
+        buttonClassical.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                voice0 = VIOLIN;
+                voice1 = VIOLA;
+                voice2 = CELLO;
+                voice3 = DOUBLE_BASS;
+                JOptionPane.showMessageDialog(null, "Classical selected");
+            }
+        });
+        buttonRock.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                voice0 = ELECTRIC_GUITAR;
+                voice1 = ELECTRIC_BASS;
+                voice2 = DISTORTED_GUITAR;
+                voice3 = ELECTRIC_PIANO;
+                JOptionPane.showMessageDialog(null, "Rock selected");
+            }
+        });
+        buttonPop.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                voice0 = SYNTH_BASS;
+                voice1 = BRIGHT_ACOUSTIC;
+                voice2 = PAD;
+                voice3 = ELECTRIC_PIANO;
+
+                JOptionPane.showMessageDialog(null, "Pop selected");
+            }
+        });
+        buttonCountry.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                voice0 = FIDDLE;
+                voice1 = BANJO;
+                voice2 = ACOUSTIC_GUITAR;
+                voice3 = ACCORDION;
+                JOptionPane.showMessageDialog(null, "Country selected");
+
+            }
+
+        });
+
+
+
+
+        comboBox0.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                // JOptionPane.showMessageDialog(null, "the selected item changed");
+                String instrument0 = (String) comboBox0.getSelectedItem();
+                // JOptionPane.showMessageDialog(null, instrument0 + " SELECTED");
+                voice0 = instruments.get(instrument0);
+                // JOptionPane.showMessageDialog(null, "int version = " + voice0);
+            }
+        });
+
+        comboBox1.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+               // JOptionPane.showMessageDialog(null, "the selected item changed");
+                String instrument1 = (String) comboBox1.getSelectedItem();
+                // JOptionPane.showMessageDialog(null, instrument1 + " SELECTED");
+                voice1 = instruments.get(instrument1);
+                // JOptionPane.showMessageDialog(null, "int version = " + voice1);
+            }
+        });
+
+        comboBox2.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                // JOptionPane.showMessageDialog(null, "the selected item changed");
+                String instrument2 = (String) comboBox2.getSelectedItem();
+                // JOptionPane.showMessageDialog(null, instrument2 + " SELECTED");
+                voice2 = instruments.get(instrument2);
+                // JOptionPane.showMessageDialog(null, "int version = " + voice2);
+            }
+        });
+
+        comboBox3.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                // JOptionPane.showMessageDialog(null, "the selected item changed");
+                String instrument3 = (String) comboBox3.getSelectedItem();
+                // JOptionPane.showMessageDialog(null, instrument3 + " SELECTED");
+                voice3 = instruments.get(instrument3);
+                // JOptionPane.showMessageDialog(null, "int version = " + voice3);
+            }
+        });
+
+    }
+
+
+
+
+
+         public static void main (String[]args){
+            JFrame frame = new JFrame("HForm");
+            frame.setContentPane(new HForm().panelMain);
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.pack();
+            frame.setVisible(true);
+
+
+        }
+
+
+}
